@@ -91,16 +91,25 @@ if uploaded_file is not None:
     important_areas = attribution > threshold
     kernel = np.ones((5, 5), np.uint8)
     dilated_areas = cv2.dilate(important_areas.astype(np.uint8), kernel, iterations=1)
-
+  
+    # Load and process the original image for visualization
     original_image = test_img.permute(1, 2, 0).cpu().numpy()
     original_image = (original_image - original_image.min()) / (original_image.max() - original_image.min())
-    original_image = original_image.astype(np.float32)
-
+    original_image = original_image.astype(np.float32)  # Ensure it's float32
+    
+    # Create a mask for non-black areas in the original image
     black_mask = (original_image.sum(axis=2) > 0.1)
-    highlight_color = np.array([1, 0, 1])
-    highlighted_image = np.zeros((*dilated_areas.shape, 3))
+    
+    # Create a color mask for highlighting
+    highlight_color = np.array([1, 0, 1], dtype=np.float32)  # Ensure it's float32
+    highlighted_image = np.zeros((*dilated_areas.shape, 3), dtype=np.float32)  # Ensure it's float32
+    
+    # Apply the highlight color only to important areas that are also non-black
     highlighted_image[(dilated_areas == 1) & (black_mask)] = highlight_color
+    
+    # Blend the original image with the highlighted areas
     blended_image = cv2.addWeighted(original_image, 0.6, highlighted_image, 0.4, 0)
+
 
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     ax[0].imshow(original_image)
