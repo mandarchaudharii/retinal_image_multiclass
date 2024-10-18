@@ -3,6 +3,7 @@ from model import load_model
 from utils import load_and_preprocess_image, integrated_gradients
 import numpy as np
 import torch
+import cv2
 
 # Load the model
 vit_model, device = load_model()
@@ -20,8 +21,8 @@ if uploaded_file is not None:
     # Convert the tensor to a NumPy array for display
     image_numpy = image.permute(1, 2, 0).detach().cpu().numpy()  # Change to HWC format
 
-    # Scale the pixel values to [0, 255] if necessary (assuming values are in [0, 1])
-    #image_numpy = (image_numpy * 255).astype(np.uint8)
+    # Scale the pixel values to [0, 255] if necessary
+    image_numpy = (image_numpy * 255).astype(np.uint8)
     
     st.image(image_numpy, caption="Uploaded Image", use_column_width=True)
     
@@ -45,21 +46,24 @@ if uploaded_file is not None:
     # Integrated Gradients
     true_labels_reshaped = torch.zeros(len(disease_labels)).to(device)
     attribution = integrated_gradients(vit_model, image, true_labels_reshaped)
-    attribution = attribution.squeeze()
+    attribution = attribution.squeeze().detach().cpu().numpy()  # Convert to NumPy array
+
+    # Normalize attribution for display
+    attribution = (attribution - np.min(attribution)) / (np.max(attribution) - np.min(attribution))  # Scale to [0, 1]
+    attribution = (attribution * 255).astype(np.uint8)  # Scale to [0, 255]
 
     # Prepare images for display
     original_image = image.permute(1, 2, 0).cpu().numpy()
     original_image = (original_image - original_image.min()) / (original_image.max() - original_image.min())
-    original_image = original_image.astype(np.float32)
+    original_image = (original_image * 255).astype(np.uint8)
 
     black_mask = (original_image.sum(axis=2) > 0.1)
     kernel = np.ones((5, 5), np.uint8)
-    dilated_areas = cv2.dilate((attribution > 0.3).astype(np.uint8), kernel, iterations=1)
+    dilated_areas = cv2.dilate((attribution > 30).astype(np.uint8), kernel, iterations=1)  # Adjust threshold as needed
     
-    highlight_color = np.array([1, 0, 1])
-    highlighted_image = np.zeros((*dilated_areas.shape, 3))
+    highlight_color = np.array([1, 0, 1])  # Magenta
+    highlighted_image = np.zeros((*dilated_areas.shape, 3), dtype=np.float32)
     highlighted_image[(dilated_areas == 1) & (black_mask)] = highlight_color
-    highlighted_image = highlighted_image.astype(np.float32)
 
     blended_image = cv2.addWeighted(original_image, 0.6, highlighted_image, 0.4, 0)
 
@@ -68,10 +72,10 @@ if uploaded_file is not None:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.image(original_image, caption="Original Image")
-    
+        st.image(original_image, caption="Original Image", use_column_width=True)
+
     with col2:
         st.image(attribution, caption="Integrated Gradients", use_column_width=True, channels="GRAY")
-    
+
     with col3:
         st.image(blended_image, caption="Highlighted Areas", use_column_width=True)
