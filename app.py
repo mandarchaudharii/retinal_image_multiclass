@@ -16,7 +16,7 @@ if uploaded_file is not None:
     image = load_and_preprocess_image(uploaded_file)
 
     # Convert the tensor to a NumPy array for display
-    image_numpy = image_tensor.permute(1, 2, 0).detach().cpu().numpy()  # Change to HWC format
+    image_numpy = image.permute(1, 2, 0).detach().cpu().numpy()  # Change to HWC format
 
     # Scale the pixel values to [0, 255] if necessary (assuming values are in [0, 1])
     image_numpy = (image_numpy * 255).astype(np.uint8)
