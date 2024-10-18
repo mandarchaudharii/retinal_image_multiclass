@@ -2,7 +2,7 @@ streamlit
 torch
 torchvision
 transformers
-numpy
+opencv-python-headless  # Use this instead of opencv-python
 Pillow
-opencv-python
 matplotlib
+numpy
