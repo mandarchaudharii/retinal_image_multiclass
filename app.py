@@ -31,7 +31,7 @@ test_transform = transforms.Compose([
 ])
 
 # Load the saved model
-vit_model = ViTForImageClassification.from_pretrained('vit_retinal_classification')
+vit_model = ViTForImageClassification.from_pretrained('mandarchaudharii/retinal_multiclass')
 vit_model.to(device)
 
 def integrated_gradients(model, img, label, steps=50):
