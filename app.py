@@ -14,7 +14,14 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png
 
 if uploaded_file is not None:
     image = load_and_preprocess_image(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+
+    # Convert the tensor to a NumPy array for display
+    image_numpy = image_tensor.permute(1, 2, 0).detach().cpu().numpy()  # Change to HWC format
+
+    # Scale the pixel values to [0, 255] if necessary (assuming values are in [0, 1])
+    image_numpy = (image_numpy * 255).astype(np.uint8)
+    
+    st.image(image_numpy, caption="Uploaded Image", use_column_width=True)
     
     disease_labels = ['DR', 'ARMD', 'MH', 'DN', 'MYA', 'BRVO', 'TSLN', 'ERM', 'LS', 'MS', 
                       'CSR', 'ODC', 'CRVO', 'TV', 'AH', 'ODP', 'ODE', 'ST', 'AION', 
