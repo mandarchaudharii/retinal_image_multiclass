@@ -2,6 +2,7 @@ import streamlit as st
 from model import load_model
 from utils import load_and_preprocess_image, integrated_gradients
 import numpy as np
+import torch
 
 # Load the model
 vit_model, device = load_model()
