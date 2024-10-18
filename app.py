@@ -138,13 +138,6 @@ if uploaded_file is not None:
     predicted_full_list_names = [labels_dict[label] for label in predicted_diseases]
     st.write(f"Predicted Disease full names: {predicted_full_list_names}")
 
-    predicted_with_probs = [(labels_dict[label], predicted_probs[i]) for i, label in enumerate(predicted_diseases)]
-
-    # Format the output
-    formatted_output = ", ".join([f"{disease} ({prob:.2f})" for disease, prob in predicted_with_probs])
-    
-    st.write(f"Predicted diseases with probabilities: {formatted_output}")
-
     true_labels_reshaped = torch.zeros(len(disease_labels)).to(device)
     attribution = integrated_gradients(vit_model, test_img, true_labels_reshaped)
     attribution = attribution.squeeze()
