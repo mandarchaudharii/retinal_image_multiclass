@@ -12,6 +12,58 @@ import torchvision.transforms.v2 as transforms
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+#Label Full Form Dict
+
+labels_dict = {
+    'ID': 'ID',
+    'Disease_Risk': 'Disease_Risk',
+    'DR': 'Diabetic retinopathy',
+    'ARMD': 'Age-related macular degeneration',
+    'MH': 'Media haze',
+    'DN': 'Drusen',
+    'MYA': 'Myopia',
+    'BRVO': 'Branch retinal vein occlusion',
+    'TSLN': 'Tessellation',
+    'ERM': 'Epiretinal membrane',
+    'LS': 'Laser scars',
+    'MS': 'Macular scars',
+    'CSR': 'Central serous retinopathy',
+    'ODC': 'Optic disc cupping',
+    'CRVO': 'Central retinal vein occlusion',
+    'TV': 'Tortuous vessels',
+    'AH': 'Asteroid hyalosis',
+    'ODP': 'Optic disc pallor',
+    'ODE': 'Optic disc edema',
+    'ST': 'Optociliary shunt',
+    'AION': 'Anterior ischemic optic neuropathy',
+    'PT': 'Parafoveal telangiectasia',
+    'RT': 'Retinal traction',
+    'RS': 'Retinitis',
+    'CRS': 'Chorioretinitis',
+    'EDN': 'Exudation',
+    'RPEC': 'Retinal pigment epithelium changes',
+    'MHL': 'Macular hole',
+    'RP': 'Retinitis pigmentosa',
+    'CWS': 'Cotton-wool spots',
+    'CB': 'Coloboma',
+    'ODPM': 'Optic disc pit maculopathy',
+    'PRH': 'Preretinal hemorrhage',
+    'MNF': 'Myelinated nerve fibers',
+    'HR': 'Hemorrhagic retinopathy',
+    'CRAO': 'Central retinal artery occlusion',
+    'TD': 'Tilted disc',
+    'CME': 'Cystoid macular edema',
+    'PTCR': 'Post-traumatic choroidal rupture',
+    'CF': 'Choroidal folds',
+    'VH': 'Vitreous hemorrhage',
+    'MCA': 'Macroaneurysm',
+    'VS': 'Vasculitis',
+    'BRAO': 'Branch retinal artery occlusion',
+    'PLQ': 'Plaque',
+    'HPED': 'Hemorrhagic pigment epithelial detachment',
+    'CL': 'Collateral'
+}
+
 # Load labels
 labels_list = ['ID', 'Disease_Risk', 'DR', 'ARMD', 'MH', 'DN', 'MYA', 'BRVO', 'TSLN',
                'ERM', 'LS', 'MS', 'CSR', 'ODC', 'CRVO', 'TV', 'AH', 'ODP', 'ODE', 'ST',
@@ -82,6 +134,9 @@ if uploaded_file is not None:
     predicted_diseases = [disease_labels[i] for i in range(len(predicted_probs)) if predicted_probs[i] > prob_threshold]
     
     st.write(f"Predicted diseases: {predicted_diseases}")
+
+    predicted_full_list_names = [labels_dict[label] for label in predicted_diseases]
+    st.write(f"Predicted Disease full names: {predicted_full_list_names}")
 
     true_labels_reshaped = torch.zeros(len(disease_labels)).to(device)
     attribution = integrated_gradients(vit_model, test_img, true_labels_reshaped)
