@@ -20,7 +20,7 @@ if uploaded_file is not None:
     image_numpy = image.permute(1, 2, 0).detach().cpu().numpy()  # Change to HWC format
 
     # Scale the pixel values to [0, 255] if necessary (assuming values are in [0, 1])
-    image_numpy = (image_numpy * 255).astype(np.uint8)
+    #image_numpy = (image_numpy * 255).astype(np.uint8)
     
     st.image(image_numpy, caption="Uploaded Image", use_column_width=True)
     
