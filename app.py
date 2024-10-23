@@ -107,7 +107,7 @@ def integrated_gradients(model, img, label, steps=50):
         z=z+1
         progress_bar.progress(int(z * progress_step * 100))  # Update progress
 
-    progress_bar.progress(int(200 * progress_step * 100))  # Update progress
+    progress_bar.progress(int(60 * progress_step * 100))  # Update progress
     
     avg_grads = np.mean(grads, axis=0)
     integrated_grad = (img - baseline).detach().cpu().numpy() * avg_grads
@@ -150,7 +150,7 @@ if uploaded_file is not None:
 
     st.write("Images Generation Progress.")
     progress_bar = st.progress(0)  # Initialize progress bar
-    progress_step = 1 / 200
+    progress_step = 1 / 60
 
     true_labels_reshaped = torch.zeros(len(disease_labels)).to(device)
     
