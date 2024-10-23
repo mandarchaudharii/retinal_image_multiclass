@@ -13,6 +13,7 @@ import torchvision.transforms.v2 as transforms
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 #Label Full Form Dict
+
 labels_dict = {
     'ID': 'ID',
     'Disease_Risk': 'Disease_Risk',
@@ -130,18 +131,12 @@ if uploaded_file is not None:
 
     predicted_probs = torch.sigmoid(output).squeeze().cpu().numpy()
     prob_threshold = 0.3
-    predicted_diseases = [(disease_labels[i], predicted_probs[i]) for i in range(len(predicted_probs)) if predicted_probs[i] > prob_threshold]
+    predicted_diseases = [disease_labels[i] for i in range(len(predicted_probs)) if predicted_probs[i] > prob_threshold]
     
-    if predicted_diseases:
-        st.write("Predicted Diseases:")
-        for disease, prob in predicted_diseases:
-            full_name = labels_dict[disease]
-            st.write(f"{disease} ({full_name}) - Probabilistic Score: {prob * 100:.2f}%")
-    else:
-        st.write("No diseases detected above the probability threshold.")
+    st.write(f"Predicted diseases: {predicted_diseases}")
 
-    progress_bar = st.progress(0)  # Initialize progress bar
-    progress_step = 1 / 3
+    predicted_full_list_names = [labels_dict[label] for label in predicted_diseases]
+    st.write(f"Predicted Disease full names: {predicted_full_list_names}")
 
     true_labels_reshaped = torch.zeros(len(disease_labels)).to(device)
     attribution = integrated_gradients(vit_model, test_img, true_labels_reshaped)
@@ -156,8 +151,6 @@ if uploaded_file is not None:
     original_image = test_img.permute(1, 2, 0).cpu().numpy()
     original_image = (original_image - original_image.min()) / (original_image.max() - original_image.min())
     original_image = original_image.astype(np.float32)  # Ensure it's float32
-
-    progress_bar.progress(int(1 * progress_step * 100))  # Update progress
     
     # Create a mask for non-black areas in the original image
     black_mask = (original_image.sum(axis=2) > 0.1)
@@ -168,11 +161,10 @@ if uploaded_file is not None:
     
     # Apply the highlight color only to important areas that are also non-black
     highlighted_image[(dilated_areas == 1) & (black_mask)] = highlight_color
-
-    progress_bar.progress(int(2 * progress_step * 100))  # Update progress
     
     # Blend the original image with the highlighted areas
     blended_image = cv2.addWeighted(original_image, 0.6, highlighted_image, 0.4, 0)
+
 
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     ax[0].imshow(original_image)
@@ -184,9 +176,7 @@ if uploaded_file is not None:
     ax[1].axis('off')
 
     ax[2].imshow(blended_image)
-    ax[2].set_title(f"Highlighted Areas For Predicted Diseases")
+    ax[2].set_title(f"Highlighted Areas - Predicted Class: {predicted_diseases}")
     ax[2].axis('off')
-
-    progress_bar.progress(int(3 * progress_step * 100))  # Complete the progress
 
     st.pyplot(fig)
