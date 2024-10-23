@@ -86,7 +86,26 @@ vit_model = ViTForImageClassification.from_pretrained('mandarchaudharii/retinal_
 vit_model.to(device)
 
 def integrated_gradients(model, img, label, steps=50):
-    # ... (same as before)
+    model.eval()
+    label = label.unsqueeze(0) if label.ndim == 1 else label
+    img = img.unsqueeze(0).to(device).requires_grad_(True)
+    label = label.to(device)
+    baseline = torch.zeros_like(img).to(device)
+    scaled_images = [baseline + (float(i) / steps) * (img - baseline) for i in range(steps + 1)]
+    
+    grads = []
+    for scaled_img in scaled_images:
+        output = model(scaled_img).logits
+        loss = torch.nn.functional.binary_cross_entropy_with_logits(output, label.float())
+        model.zero_grad()
+        loss.backward()
+        grads.append(img.grad.data.cpu().numpy())
+
+    avg_grads = np.mean(grads, axis=0)
+    integrated_grad = (img - baseline).detach().cpu().numpy() * avg_grads
+    integrated_grad = np.maximum(integrated_grad.sum(axis=1), 0)
+    integrated_grad -= integrated_grad.min()
+    integrated_grad /= integrated_grad.max()
     return integrated_grad
 
 def load_and_preprocess_image(image):
@@ -102,9 +121,9 @@ if uploaded_file is not None:
     st.image(image, caption='Uploaded Image', use_column_width=True)
 
     test_img = load_and_preprocess_image(image)
-
+    
     disease_labels = [label for label in labels_list[2:] if label not in ['HR', 'ODPM']]
-
+    
     vit_model.eval()
     with torch.no_grad():
         output = vit_model(test_img.unsqueeze(0).to(device)).logits
@@ -112,7 +131,7 @@ if uploaded_file is not None:
     predicted_probs = torch.sigmoid(output).squeeze().cpu().numpy()
     prob_threshold = 0.3
     predicted_diseases = [(disease_labels[i], predicted_probs[i]) for i in range(len(predicted_probs)) if predicted_probs[i] > prob_threshold]
-
+    
     if predicted_diseases:
         st.write("Predicted Diseases:")
         for disease, prob in predicted_diseases:
@@ -121,11 +140,9 @@ if uploaded_file is not None:
     else:
         st.write("No diseases detected above the probability threshold.")
 
-    # Start progress bar for image visualization
     progress_bar = st.progress(0)  # Initialize progress bar
-    progress_step = 1 / 3  # Since we have 3 image steps (original, attribution, blended)
+    progress_step = 1 / 3
 
-    # Set true labels for integrated gradients
     true_labels_reshaped = torch.zeros(len(disease_labels)).to(device)
     attribution = integrated_gradients(vit_model, test_img, true_labels_reshaped)
     attribution = attribution.squeeze()
@@ -139,9 +156,9 @@ if uploaded_file is not None:
     original_image = test_img.permute(1, 2, 0).cpu().numpy()
     original_image = (original_image - original_image.min()) / (original_image.max() - original_image.min())
     original_image = original_image.astype(np.float32)  # Ensure it's float32
-    
-    progress_bar.progress(int(1 * progress_step * 100))  # Update progress
 
+    progress_bar.progress(int(1 * progress_step * 100))  # Update progress
+    
     # Create a mask for non-black areas in the original image
     black_mask = (original_image.sum(axis=2) > 0.1)
     
@@ -151,9 +168,9 @@ if uploaded_file is not None:
     
     # Apply the highlight color only to important areas that are also non-black
     highlighted_image[(dilated_areas == 1) & (black_mask)] = highlight_color
-    
-    progress_bar.progress(int(2 * progress_step * 100))  # Update progress
 
+    progress_bar.progress(int(2 * progress_step * 100))  # Update progress
+    
     # Blend the original image with the highlighted areas
     blended_image = cv2.addWeighted(original_image, 0.6, highlighted_image, 0.4, 0)
 
