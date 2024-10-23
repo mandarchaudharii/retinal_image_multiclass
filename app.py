@@ -177,7 +177,7 @@ if uploaded_file is not None:
     ax[1].axis('off')
 
     ax[2].imshow(blended_image)
-    ax[2].set_title(f"Highlighted Areas - Predicted Class: {predicted_diseases}")
+    ax[2].set_title(f"Highlighted Areas For Predicted Diseases")
     ax[2].axis('off')
 
     st.pyplot(fig)
