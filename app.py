@@ -13,7 +13,6 @@ import torchvision.transforms.v2 as transforms
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 #Label Full Form Dict
-
 labels_dict = {
     'ID': 'ID',
     'Disease_Risk': 'Disease_Risk',
@@ -131,7 +130,7 @@ if uploaded_file is not None:
 
     predicted_probs = torch.sigmoid(output).squeeze().cpu().numpy()
     prob_threshold = 0.3
-    predicted_diseases = [disease_labels[i] for i in range(len(predicted_probs)) if predicted_probs[i] > prob_threshold]
+    predicted_diseases = [(disease_labels[i], predicted_probs[i]) for i in range(len(predicted_probs)) if predicted_probs[i] > prob_threshold]
     
     if predicted_diseases:
         st.write("Predicted Diseases:")
@@ -167,7 +166,6 @@ if uploaded_file is not None:
     
     # Blend the original image with the highlighted areas
     blended_image = cv2.addWeighted(original_image, 0.6, highlighted_image, 0.4, 0)
-
 
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     ax[0].imshow(original_image)
