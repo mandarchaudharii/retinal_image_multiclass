@@ -89,14 +89,12 @@ def integrated_gradients(model, img, label, steps=50):
     model.eval()
     label = label.unsqueeze(0) if label.ndim == 1 else label
     img = img.unsqueeze(0).to(device).requires_grad_(True)
-
-    progress_bar.progress(int(2 * progress_step * 100))  # Update progress
     
     label = label.to(device)
     baseline = torch.zeros_like(img).to(device)
     scaled_images = [baseline + (float(i) / steps) * (img - baseline) for i in range(steps + 1)]
 
-    progress_bar.progress(int(3 * progress_step * 100))  # Update progress
+    z=0
     
     grads = []
     for scaled_img in scaled_images:
@@ -106,7 +104,10 @@ def integrated_gradients(model, img, label, steps=50):
         loss.backward()
         grads.append(img.grad.data.cpu().numpy())
 
-    progress_bar.progress(int(4 * progress_step * 100))  # Update progress
+        z=z+1
+        progress_bar.progress(int(z * progress_step * 100))  # Update progress
+
+    progress_bar.progress(int(50000 * progress_step * 100))  # Update progress
     
     avg_grads = np.mean(grads, axis=0)
     integrated_grad = (img - baseline).detach().cpu().numpy() * avg_grads
@@ -149,30 +150,22 @@ if uploaded_file is not None:
 
     st.write("Images Generation Progress.")
     progress_bar = st.progress(0)  # Initialize progress bar
-    progress_step = 1 / 10
+    progress_step = 1 / 50000
 
     true_labels_reshaped = torch.zeros(len(disease_labels)).to(device)
-
-    progress_bar.progress(int(1 * progress_step * 100))  # Update progress
     
     attribution = integrated_gradients(vit_model, test_img, true_labels_reshaped)
     attribution = attribution.squeeze()
-
-    progress_bar.progress(int(5 * progress_step * 100))  # Update progress
 
     threshold = 0.3
     important_areas = attribution > threshold
     kernel = np.ones((5, 5), np.uint8)
     dilated_areas = cv2.dilate(important_areas.astype(np.uint8), kernel, iterations=1)
-
-    progress_bar.progress(int(6 * progress_step * 100))  # Update progress
   
     # Load and process the original image for visualization
     original_image = test_img.permute(1, 2, 0).cpu().numpy()
     original_image = (original_image - original_image.min()) / (original_image.max() - original_image.min())
     original_image = original_image.astype(np.float32)  # Ensure it's float32
-
-    progress_bar.progress(int(7 * progress_step * 100))  # Update progress
     
     # Create a mask for non-black areas in the original image
     black_mask = (original_image.sum(axis=2) > 0.1)
@@ -180,16 +173,12 @@ if uploaded_file is not None:
     # Create a color mask for highlighting
     highlight_color = np.array([1, 0, 1], dtype=np.float32)  # Ensure it's float32
     highlighted_image = np.zeros((*dilated_areas.shape, 3), dtype=np.float32)  # Ensure it's float32
-
-    progress_bar.progress(int(8 * progress_step * 100))  # Update progress
     
     # Apply the highlight color only to important areas that are also non-black
     highlighted_image[(dilated_areas == 1) & (black_mask)] = highlight_color
     
     # Blend the original image with the highlighted areas
     blended_image = cv2.addWeighted(original_image, 0.6, highlighted_image, 0.4, 0)
-
-    progress_bar.progress(int(9 * progress_step * 100))  # Update progress
 
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     ax[0].imshow(original_image)
@@ -203,7 +192,5 @@ if uploaded_file is not None:
     ax[2].imshow(blended_image)
     ax[2].set_title(f"Highlighted Areas For Predicted Diseases")
     ax[2].axis('off')
-
-    progress_bar.progress(int(10 * progress_step * 100))  # Complete the progress
 
     st.pyplot(fig)
